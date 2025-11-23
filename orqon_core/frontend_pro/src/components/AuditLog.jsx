@@ -12,7 +12,9 @@ import {
   TableCell
 } from '@carbon/react';
 import { Document, Checkmark, WarningAlt, MisuseOutline } from '@carbon/icons-react';
+
 export default function AuditLog({ trades, auditTrail = [] }) {
+  // Transform trades into audit log format
   const auditLogData = trades.map((trade, idx) => ({
     id: idx,
     instructionIntent: `${trade.action} ${trade.quantity} shares of ${trade.asset || trade.ticker} ${
@@ -26,6 +28,7 @@ export default function AuditLog({ trades, auditTrail = [] }) {
     slippage: trade.slippage_percent || null,
     trade: trade
   }));
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'COMPLIANT':
@@ -38,6 +41,7 @@ export default function AuditLog({ trades, auditTrail = [] }) {
         return <Checkmark size={20} className="text-gray-600" />;
     }
   };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'COMPLIANT':
@@ -50,19 +54,22 @@ export default function AuditLog({ trades, auditTrail = [] }) {
         return 'gray';
     }
   };
+
   const getRiskColor = (score) => {
     if (score >= 70) return 'bg-red-100 text-red-700 border-red-400';
     if (score >= 40) return 'bg-yellow-100 text-yellow-700 border-yellow-400';
     return 'bg-green-100 text-green-700 border-green-400';
   };
+
   const headers = [
     { key: 'instructionIntent', header: 'Instruction Intent' },
     { key: 'executionStatus', header: 'Execution Status' },
     { key: 'riskScore', header: 'Risk Score' },
     { key: 'auditTrail', header: 'Audit Trail' },
   ];
+
   return (
-    <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
+    <Tile className="border border-blue-600/40 bg-gray-900/60 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Document size={20} className="text-blue-400" />
@@ -72,6 +79,7 @@ export default function AuditLog({ trades, auditTrail = [] }) {
           Export Audit Trail
         </Button>
       </div>
+
       {auditLogData.length === 0 ? (
         <div className="py-8 text-center">
           <p className="text-gray-600 text-sm">No trades to audit</p>

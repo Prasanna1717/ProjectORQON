@@ -1,3 +1,7 @@
+/**
+ * ORQON Trade Intelligence Platform
+ * Built with IBM Carbon Design System
+ */
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { 
@@ -14,6 +18,8 @@ import {
 } from '@carbon/react';
 import { Notification, UserAvatar, Ai } from '@carbon/icons-react';
 import { Toaster } from 'sonner';
+
+// Components
 import ChatInterface from './components/ChatInterface.jsx';
 import TradeHistory from './components/TradeHistory.jsx';
 import MarketOverview from './components/MarketOverview.jsx';
@@ -23,7 +29,9 @@ import ComplianceInputPanel from './components/ComplianceInputPanel.jsx';
 import ExecutiveSummary from './components/ExecutiveSummary.jsx';
 import AuditLog from './components/AuditLog.jsx';
 import ComplianceCharts from './components/ComplianceCharts.jsx';
+
 const queryClient = new QueryClient();
+
 function App() {
   const [trades, setTrades] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -33,10 +41,12 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState([]);
+
+  // Authenticate on mount
   useEffect(() => {
     const authenticateUser = async () => {
       try {
-        const response = await fetch('http:
+        const response = await fetch('http://localhost:8000/auth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -53,13 +63,16 @@ function App() {
     };
     authenticateUser();
   }, []);
+
+  // Fetch notifications (reminders/meetings) from Google Calendar
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await fetch('http:
+        const response = await fetch('http://localhost:8003/api/calendar/upcoming', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
+        
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.events) {
@@ -70,15 +83,21 @@ function App() {
         console.error('❌ Failed to fetch notifications:', error);
       }
     };
+    
     fetchNotifications();
+    // Refresh every 5 minutes
     const interval = setInterval(fetchNotifications, 300000);
     return () => clearInterval(interval);
   }, []);
+
   const handleTradeCreated = (trade) => {
     setTrades(prev => [trade, ...prev]);
   };
+
   const handleComplianceAnalysis = (analysisData) => {
     setComplianceData(analysisData);
+    
+    // Add compliance data to the last trade
     if (trades.length > 0) {
       const updatedTrades = [...trades];
       updatedTrades[0] = {
@@ -90,12 +109,15 @@ function App() {
       setTrades(updatedTrades);
     }
   };
+
   console.log('✅ App loaded - Tab:', activeTab, 'Trades:', trades.length, 'Token:', token ? 'Ready' : 'Loading');
+
+  // Wrap in try-catch
   try {
     return (
       <QueryClientProvider client={queryClient}>
         <Theme theme="g100">
-          {}
+          {/* IBM Carbon Header */}
           <Header aria-label="ORQON Platform">
           <div className="flex items-center gap-2 pl-4" style={{ marginRight: '-1rem' }}>
             <div className="w-8 h-8 flex items-center justify-center">
@@ -319,9 +341,10 @@ function App() {
             )}
           </HeaderGlobalBar>
         </Header>
-        {}
+
+        {/* Main Content */}
         <Content style={{ height: 'calc(100vh - 48px)', overflow: 'hidden' }}>
-          {activeTab === 'dashboard' && (
+          <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none', height: '100%' }}>
             <Grid fullWidth className="h-full" style={{ overflow: 'hidden' }}>
               <Column lg={5} md={4} sm={4} className="h-full" style={{ overflow: 'hidden' }}>
                 <div className="space-y-4 p-4 h-full overflow-y-auto">
@@ -335,8 +358,9 @@ function App() {
                 </div>
               </Column>
             </Grid>
-          )}
-          {activeTab === 'compliance' && (
+          </div>
+
+          <div style={{ display: activeTab === 'compliance' ? 'block' : 'none', height: '100%' }}>
             <Grid fullWidth className="overflow-hidden h-full">
               <Column lg={6} md={4} sm={4} className="h-full overflow-y-auto">
                 <div className="p-4 h-full">
@@ -354,8 +378,9 @@ function App() {
                 </div>
               </Column>
             </Grid>
-          )}
-          {activeTab === 'analytics' && (
+          </div>
+
+          <div style={{ display: activeTab === 'analytics' ? 'block' : 'none', height: '100%' }}>
             <Grid fullWidth className="overflow-hidden h-full">
               <Column lg={16} md={8} sm={4} className="h-full overflow-y-auto">
                 <div className="p-4">
@@ -363,8 +388,9 @@ function App() {
                 </div>
               </Column>
             </Grid>
-          )}
-          {activeTab === 'history' && (
+          </div>
+
+          <div style={{ display: activeTab === 'history' ? 'block' : 'none', height: '100%' }}>
             <Grid fullWidth className="overflow-hidden h-full">
               <Column lg={16} md={8} sm={4} className="h-full overflow-y-auto">
                 <div className="p-4">
@@ -372,8 +398,9 @@ function App() {
                 </div>
               </Column>
             </Grid>
-          )}
+          </div>
         </Content>
+
         <Toaster position="top-right" theme="light" />
       </Theme>
     </QueryClientProvider>
@@ -391,4 +418,5 @@ function App() {
     );
   }
 }
+
 export default App;

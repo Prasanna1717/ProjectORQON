@@ -3,38 +3,46 @@ import { ArrowUp, ArrowDown, Renew } from '@carbon/icons-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+
 const FINNHUB_API_KEY = 'd4h0cd1r01qgvvc5ft20d4h0cd1r01qgvvc5ft2g';
+
+// Symbols to track with their display names
 const SYMBOLS = [
   { symbol: 'SPY', name: 'S&P 500' },
   { symbol: 'QQQ', name: 'NASDAQ' },
   { symbol: 'DIA', name: 'DOW' },
   { symbol: 'VXX', name: 'VIX' },
 ];
+
 export default function MarketOverview() {
   const [marketData, setMarketData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+
   const fetchMarketData = async () => {
     setLoading(true);
     setError(null);
+    
     try {
       const promises = SYMBOLS.map(async ({ symbol, name }) => {
-        const response = await axios.get(`https:
+        const response = await axios.get(`https://finnhub.io/api/v1/quote`, {
           params: {
             symbol: symbol,
             token: FINNHUB_API_KEY
           }
         });
+        
         const data = response.data;
         return {
           symbol: name,
-          value: data.c, 
-          change: data.d, 
-          changePercent: data.dp, 
+          value: data.c, // current price
+          change: data.d, // change
+          changePercent: data.dp, // percent change
         };
       });
+      
       const results = await Promise.all(promises);
       setMarketData(results);
       setLastUpdate(new Date());
@@ -45,17 +53,22 @@ export default function MarketOverview() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchMarketData();
+    // Refresh every 60 seconds
     const interval = setInterval(fetchMarketData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Update clock every second
   useEffect(() => {
     const clockInterval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(clockInterval);
   }, []);
+
   return (
     <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
       <div className="flex justify-between items-center mb-4">
@@ -76,11 +89,13 @@ export default function MarketOverview() {
           </button>
         </div>
       </div>
+
       {error && (
         <div className="text-red-400 text-sm mb-4 p-2 bg-red-900/20 rounded border border-red-600/40">
           {error}
         </div>
       )}
+
       {loading && marketData.length === 0 ? (
         <div className="flex justify-center items-center py-8">
           <InlineLoading description="Loading market data..." />
@@ -117,3 +132,6 @@ export default function MarketOverview() {
     </Tile>
   );
 }
+
+
+

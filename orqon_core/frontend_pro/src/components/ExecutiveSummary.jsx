@@ -3,20 +3,25 @@ import { Tile, Button } from '@carbon/react';
 import { Document, Email, WarningAlt, CheckmarkFilled, ErrorFilled } from '@carbon/icons-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-const API_BASE = 'http:
+
+const API_BASE = 'http://localhost:8003';
+
 export default function ExecutiveSummary({ complianceData }) {
   const [executiveSummary, setExecutiveSummary] = useState('No analysis performed yet.');
   const [auditLogs, setAuditLogs] = useState([]);
+  
   const {
     compliance_score = 100,
     violations = [],
     summary = executiveSummary,
     recommendations = []
   } = complianceData || {};
+  
   useEffect(() => {
     fetchExecutiveSummary();
     fetchAuditLogs();
   }, [complianceData]);
+  
   const fetchExecutiveSummary = async () => {
     try {
       const response = await axios.get(`${API_BASE}/executive-summary`);
@@ -27,6 +32,7 @@ export default function ExecutiveSummary({ complianceData }) {
       console.error('Failed to fetch executive summary:', error);
     }
   };
+  
   const fetchAuditLogs = async () => {
     try {
       const response = await axios.get(`${API_BASE}/audit-logs`);
@@ -37,15 +43,20 @@ export default function ExecutiveSummary({ complianceData }) {
       console.error('Failed to fetch audit logs:', error);
     }
   };
+  
   const handleGenerateReport = async () => {
     const loadingToast = toast.loading('Generating Client Portfolio Report with RAG analysis...');
+    
     try {
       const response = await axios.post(`${API_BASE}/generate-portfolio-report`, {
         trigger_rag: true
       });
+
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         toast.success('📄 Client Portfolio Report generated successfully');
+        // Trigger the open endpoint
         await axios.get(`${API_BASE}/download-portfolio-report`);
         fetchExecutiveSummary();
       } else {
@@ -57,13 +68,17 @@ export default function ExecutiveSummary({ complianceData }) {
       toast.error(error.response?.data?.detail || 'Failed to generate report');
     }
   };
+  
   const handleEmailSupervisor = async () => {
     const loadingToast = toast.loading('Sending email to supervisor...');
+    
     try {
       const response = await axios.post(`${API_BASE}/email-supervisor`, {
         timestamp: new Date().toISOString()
       });
+
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         toast.success('📧 Email sent to supervisor with attachments');
       } else {
@@ -75,21 +90,25 @@ export default function ExecutiveSummary({ complianceData }) {
       toast.error(error.response?.data?.detail || 'Failed to send email');
     }
   };
+
   const getScoreColor = (score) => {
     if (score >= 90) return 'text-green-600';
     if (score >= 70) return 'text-yellow-600';
     return 'text-red-600';
   };
+
   const getScoreBg = (score) => {
     if (score >= 90) return 'bg-green-50 border-green-400';
     if (score >= 70) return 'bg-yellow-50 border-yellow-400';
     return 'bg-red-50 border-red-400';
   };
+
   return (
     <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm shadow-[inset_0_0_30px_rgba(59,130,246,0.08)]">
       <div className="mb-4">
         <h2 className="text-xl font-bold mb-2 text-blue-300">Compliance Officer Review: Q4-2025</h2>
-        {}
+        
+        {/* Compliance Score - Blue Theme */}
         <div className="mb-4 border border-blue-600/40 rounded-lg p-4 bg-blue-950/30">
           <p className="text-xs text-blue-300 mb-2 font-semibold">Compliance Score</p>
           <div className="flex items-center justify-between">
@@ -117,10 +136,12 @@ export default function ExecutiveSummary({ complianceData }) {
           </div>
         </div>
       </div>
+
       <div className="mb-4 p-4 bg-gray-800/70 backdrop-blur-sm border border-blue-600/30 rounded-lg">
         <h3 className="text-sm font-semibold mb-2 text-blue-300">Executive Summary:</h3>
         <p className="text-sm text-gray-300">{executiveSummary}</p>
       </div>
+
       {violations.length > 0 && (
         <div className="mb-4 space-y-2 p-4 bg-gray-800/70 backdrop-blur-sm border border-blue-600/30 rounded-lg shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
           <h3 className="text-sm font-semibold text-blue-300">Critical Violations:</h3>
@@ -141,6 +162,7 @@ export default function ExecutiveSummary({ complianceData }) {
           ))}
         </div>
       )}
+
       {recommendations.length > 0 && (
         <div className="mb-4 p-4 bg-gray-800/70 backdrop-blur-sm border border-blue-600/30 rounded-lg shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
           <h3 className="text-sm font-semibold mb-2 text-blue-300">Action Items:</h3>
@@ -153,6 +175,7 @@ export default function ExecutiveSummary({ complianceData }) {
           </div>
         </div>
       )}
+
       <div className="flex gap-2 mb-4">
         <Button 
           kind="primary" 
@@ -171,7 +194,8 @@ export default function ExecutiveSummary({ complianceData }) {
           📧 Email Supervisor
         </Button>
       </div>
-      {}
+      
+      {/* Compliance Audit Log */}
       <div className="border-t border-blue-600/30 pt-4">
         <h3 className="text-sm font-semibold mb-3 text-cyan-300 flex items-center gap-2">
           <Document size={16} className="text-cyan-400" />
@@ -206,3 +230,6 @@ export default function ExecutiveSummary({ complianceData }) {
     </Tile>
   );
 }
+
+
+

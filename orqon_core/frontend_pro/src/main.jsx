@@ -2,18 +2,24 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './carbon.scss'
 import './index.css'
+
 console.log('🚀 main.jsx loaded');
+
+// Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
+
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
+
   componentDidCatch(error, errorInfo) {
     console.error('❌ React Error Boundary caught:', error, errorInfo);
   }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -32,6 +38,8 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+// Dynamic import with error handling
 let App;
 try {
   const module = await import('./App.jsx');
@@ -47,6 +55,7 @@ try {
     </div>
   );
 }
+
 const root = document.getElementById('root');
 if (!root) {
   document.body.innerHTML = '<h1 style="color:red;padding:40px;">Error: Root element not found!</h1>';

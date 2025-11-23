@@ -3,8 +3,11 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, AreaChart, SimpleBarChart, DonutChart } from '@carbon/charts-react';
 import '@carbon/charts-react/styles.css';
+
 export default function ComplianceCharts() {
   const [analytics, setAnalytics] = useState(null);
+  
+  // Generate chart data
   const generateTimeSeriesData = () => {
     const data = [];
     const today = new Date();
@@ -19,12 +22,14 @@ export default function ComplianceCharts() {
     }
     return data;
   };
+
   const generateVolumeData = () => {
     return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].flatMap(day => [
       { group: 'Buy', key: day, value: Math.floor(Math.random() * 1000) + 500 },
       { group: 'Sell', key: day, value: Math.floor(Math.random() * 800) + 400 },
     ]);
   };
+
   const generateAssetAllocation = () => {
     const assets = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN'];
     return assets.map(asset => ({
@@ -32,6 +37,7 @@ export default function ComplianceCharts() {
       value: Math.floor(Math.random() * 30) + 10,
     }));
   };
+
   const generatePLData = () => {
     const data = [];
     const today = new Date();
@@ -46,11 +52,12 @@ export default function ComplianceCharts() {
     }
     return data;
   };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log('ComplianceCharts: Fetching CSV data...');
-        const response = await axios.get('http:
+        const response = await axios.get('http://localhost:8003/get-csv-data');
         console.log('ComplianceCharts: CSV data received:', response.data);
         if (response.data.success) {
           calculateAnalytics(response.data.rows);
@@ -63,8 +70,10 @@ export default function ComplianceCharts() {
     };
     fetchData();
   }, []);
+
   const calculateAnalytics = (rows) => {
     if (!rows || rows.length === 0) return;
+
     const buys = rows.filter(r => r.Side?.toLowerCase() === 'buy').length;
     const sells = rows.filter(r => r.Side?.toLowerCase() === 'sell').length;
     const solicited = rows.filter(r => r.Solicited?.toLowerCase() === 'yes').length;
@@ -75,18 +84,22 @@ export default function ComplianceCharts() {
     const followUp = rows.filter(r => r.Stage?.toLowerCase().includes('follow')).length;
     const compliance = rows.filter(r => r.Stage?.toLowerCase().includes('compliance')).length;
     const needsMeeting = rows.filter(r => r.MeetingNeeded?.toLowerCase() === 'yes').length;
+
     const tickerCount = {};
     rows.forEach(r => {
       if (r.Ticker) tickerCount[r.Ticker] = (tickerCount[r.Ticker] || 0) + 1;
     });
     const topTickers = Object.entries(tickerCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
     const clientCount = {};
     rows.forEach(r => {
       if (r.Client) clientCount[r.Client] = (clientCount[r.Client] || 0) + 1;
     });
     const topClients = Object.entries(clientCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
     const totalVolume = rows.reduce((sum, r) => sum + (parseInt(r.Qty) || 0), 0);
     const avgVolume = Math.round(totalVolume / rows.length);
+
     const highRiskTrades = rows.filter(r => 
       r.Stage?.toLowerCase().includes('compliance') || 
       r.MeetingNeeded?.toLowerCase() === 'yes' ||
@@ -94,23 +107,28 @@ export default function ComplianceCharts() {
       r.Notes?.toLowerCase().includes('panic') ||
       r.Notes?.toLowerCase().includes('emotional')
     ).length;
+
     const avgPrice = rows.filter(r => parseFloat(r.Price) > 0).reduce((sum, r, _, arr) => 
       sum + parseFloat(r.Price) / arr.length, 0
     );
+
     const analyticsData = {
       total: rows.length, buys, sells, solicited, unsolicited, marketOrders,
       limitOrders, pending, followUp, compliance, needsMeeting, topTickers,
       topClients, totalVolume, avgVolume, highRiskTrades, avgPrice
     };
+    
     console.log('ComplianceCharts: Analytics calculated:', analyticsData);
     setAnalytics(analyticsData);
   };
+
   if (!analytics) {
     return null;
   }
+
   return (
     <div className="space-y-4">
-      {}
+      {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4">
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm hover:border-blue-500/50 transition-all">
           <p className="text-xs text-gray-400 mb-1">Total Trades</p>
@@ -131,8 +149,9 @@ export default function ComplianceCharts() {
           <p className="text-3xl font-bold text-yellow-400">{analytics.highRiskTrades}</p>
         </Tile>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-        {}
+        {/* Buy/Sell */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Buy vs Sell Distribution</h3>
           <div className="space-y-4">
@@ -162,7 +181,8 @@ export default function ComplianceCharts() {
             </div>
           </div>
         </Tile>
-        {}
+
+        {/* Solicitation */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Solicitation Analysis</h3>
           <div className="space-y-4">
@@ -197,7 +217,8 @@ export default function ComplianceCharts() {
             </p>
           </div>
         </Tile>
-        {}
+
+        {/* Order Types */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Order Type Distribution</h3>
           <div className="space-y-4">
@@ -237,7 +258,8 @@ export default function ComplianceCharts() {
             </div>
           </div>
         </Tile>
-        {}
+
+        {/* Stage Pipeline */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Trade Stage Pipeline</h3>
           <div className="space-y-3">
@@ -291,7 +313,8 @@ export default function ComplianceCharts() {
             </div>
           </div>
         </Tile>
-        {}
+
+        {/* Top Tickers */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Top 5 Most Traded Tickers</h3>
           <div className="space-y-3">
@@ -314,7 +337,8 @@ export default function ComplianceCharts() {
             ))}
           </div>
         </Tile>
-        {}
+
+        {/* Top Clients */}
         <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
           <h3 className="text-xl mb-4 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Top 5 Most Active Clients</h3>
           <div className="space-y-3">
@@ -337,7 +361,8 @@ export default function ComplianceCharts() {
             ))}
           </div>
         </Tile>
-        {}
+
+        {/* Risk Summary */}
         <Tile className="border border-red-600/40 bg-gray-900/90 backdrop-blur-sm col-span-2">
           <h3 className="text-xl mb-4 text-red-400" style={{ fontFamily: 'IBM Plex Sans' }}>Risk Assessment & Compliance Summary</h3>
           <div className="grid grid-cols-4 gap-4">
@@ -379,11 +404,12 @@ export default function ComplianceCharts() {
           </div>
         </Tile>
       </div>
-      {}
+
+      {/* Performance Charts Section */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'IBM Plex Sans' }}>Performance Charts</h2>
         <div className="grid grid-cols-2 gap-4">
-          {}
+          {/* Portfolio Performance */}
           <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
             <h3 className="text-lg mb-3 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Portfolio Performance</h3>
             <LineChart
@@ -401,7 +427,8 @@ export default function ComplianceCharts() {
               }}
             />
           </Tile>
-          {}
+
+          {/* Weekly Volume */}
           <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
             <h3 className="text-lg mb-3 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Weekly Volume</h3>
             <SimpleBarChart
@@ -418,7 +445,8 @@ export default function ComplianceCharts() {
               }}
             />
           </Tile>
-          {}
+
+          {/* Asset Allocation */}
           <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
             <h3 className="text-lg mb-3 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>Asset Allocation</h3>
             <DonutChart
@@ -432,7 +460,8 @@ export default function ComplianceCharts() {
               }}
             />
           </Tile>
-          {}
+
+          {/* P&L Timeline */}
           <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
             <h3 className="text-lg mb-3 text-blue-400" style={{ fontFamily: 'IBM Plex Sans' }}>P&L Timeline</h3>
             <AreaChart
@@ -455,3 +484,6 @@ export default function ComplianceCharts() {
     </div>
   );
 }
+
+
+

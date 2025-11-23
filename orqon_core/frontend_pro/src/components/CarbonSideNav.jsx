@@ -9,6 +9,7 @@ import {
   DocumentTasks,
   Settings,
 } from '@carbon/icons-react';
+
 export default function CarbonSideNav({ activeItem, onItemClick, isExpanded, onToggle }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Dashboard },
@@ -16,6 +17,7 @@ export default function CarbonSideNav({ activeItem, onItemClick, isExpanded, onT
     { id: 'history', label: 'Trade History', icon: DocumentTasks },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
   return (
     <SideNav
       aria-label="Side navigation"

@@ -4,16 +4,20 @@ import { formatCurrency, formatPercentage } from '../lib/utils';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+
 export default function PortfolioSummary({ trades }) {
   const [csvData, setCsvData] = useState([]);
+
   useEffect(() => {
     fetchCSVData();
   }, []);
+
   const fetchCSVData = async () => {
     try {
-      const response = await axios.get('http:
+      const response = await axios.get('http://localhost:8003/download/csv');
       const csvText = response.data;
       const rows = csvText.split('\n').slice(1).filter(row => row.trim());
+      
       const parsed = rows.map(row => {
         const cols = row.split(',');
         return {
@@ -24,11 +28,13 @@ export default function PortfolioSummary({ trades }) {
           price: parseFloat(cols[7]) || 0
         };
       }).filter(row => row.client && row.ticker && row.qty > 0);
+      
       setCsvData(parsed);
     } catch (error) {
       console.error('Error fetching CSV:', error);
     }
   };
+
   const calculatePortfolioValue = () => {
     const stockPrices = {
       'AAPL': 175.50,
@@ -42,21 +48,26 @@ export default function PortfolioSummary({ trades }) {
       'RIVN': 18.50,
       'DAL': 48.75
     };
+
     let totalCost = 0;
     let totalCurrentValue = 0;
     const clientTotals = {};
     const holdings = {};
+
     csvData.forEach(trade => {
       const currentPrice = stockPrices[trade.ticker] || trade.price || 100;
       const costPrice = trade.price || currentPrice * 0.95;
+      
       if (trade.side === 'BUY') {
         const cost = trade.qty * costPrice;
         totalCost += cost;
+
         if (!holdings[trade.ticker]) {
           holdings[trade.ticker] = { qty: 0, cost: 0 };
         }
         holdings[trade.ticker].qty += trade.qty;
         holdings[trade.ticker].cost += cost;
+
         if (!clientTotals[trade.client]) {
           clientTotals[trade.client] = 0;
         }
@@ -70,18 +81,21 @@ export default function PortfolioSummary({ trades }) {
         holdings[trade.ticker].cost -= trade.qty * avgCost;
       }
     });
+
     Object.entries(holdings).forEach(([ticker, data]) => {
       if (data.qty > 0) {
         const currentPrice = stockPrices[ticker] || 100;
         totalCurrentValue += data.qty * currentPrice;
       }
     });
+
     const profitLoss = totalCurrentValue - totalCost;
     const profitLossPercent = totalCost > 0 ? (profitLoss / totalCost) : 0;
     const commission = totalCost * 0.05;
     const topClients = Object.entries(clientTotals)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3);
+
     return { 
       totalValue: totalCurrentValue, 
       totalCost, 
@@ -91,7 +105,9 @@ export default function PortfolioSummary({ trades }) {
       topClients
     };
   };
+
   const stats = calculatePortfolioValue();
+
   return (
     <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
@@ -102,7 +118,7 @@ export default function PortfolioSummary({ trades }) {
         <button
           onClick={async () => {
             try {
-              const response = await axios.get('http:
+              const response = await axios.get('http://localhost:8003/open-csv');
               if (response.data.success) {
                 toast.success('Opening trade blotter CSV...');
               }
@@ -117,16 +133,19 @@ export default function PortfolioSummary({ trades }) {
           <Document size={16} className="text-blue-400" />
         </button>
       </div>
+
       <div className="space-y-4">
         <Tile className="border border-blue-600/40 bg-gray-800/70 backdrop-blur-sm hover:bg-gray-800/90 hover:border-blue-500/50 shadow-[inset_0_-25px_40px_-10px_rgba(59,130,246,0.12)] transition-all">
           <p className="text-xs text-gray-400 mb-1">Total Value</p>
           <p className="text-2xl font-bold text-blue-400">{formatCurrency(stats.totalValue)}</p>
         </Tile>
+
         <div className="grid grid-cols-2 gap-3">
           <Tile className="border border-blue-600/40 bg-gray-800/70 backdrop-blur-sm hover:bg-gray-800/90 hover:border-blue-500/50 shadow-[inset_0_-30px_50px_-15px_rgba(59,130,246,0.12)] transition-all">
             <p className="text-xs text-gray-400 mb-1">Cost Basis</p>
             <p className="text-sm font-semibold text-blue-300">{formatCurrency(stats.totalCost)}</p>
           </Tile>
+
           <Tile className={`border bg-gray-800/70 backdrop-blur-sm hover:bg-gray-800/90 transition-all ${
             stats.profitLoss >= 0 ? 'border-green-600/40 hover:border-green-500/50 shadow-[inset_0_-25px_40px_-10px_rgba(34,197,94,0.12)]' : 'border-red-600/40 hover:border-red-500/50 shadow-[inset_0_-25px_40px_-10px_rgba(239,68,68,0.12)]'
           }`}>
@@ -145,6 +164,7 @@ export default function PortfolioSummary({ trades }) {
             </div>
           </Tile>
         </div>
+
         <Tile light className="bg-blue-50 border-2 border-blue-400">
           <p className="text-xs text-blue-700 mb-2">Return</p>
           <p className={`text-2xl font-bold ${
@@ -153,10 +173,12 @@ export default function PortfolioSummary({ trades }) {
             {stats.profitLossPercent >= 0 ? '+' : ''}{formatPercentage(stats.profitLossPercent)}
           </p>
         </Tile>
+
         <Tile className="border border-purple-600/40 bg-gray-800/70 backdrop-blur-sm hover:bg-gray-800/90 hover:border-purple-500/50 shadow-[inset_0_-25px_40px_-10px_rgba(168,85,247,0.12)] transition-all">
           <p className="text-xs text-gray-400 mb-1">Total Commission (5%)</p>
           <p className="text-lg font-semibold text-purple-300">{formatCurrency(stats.commission)}</p>
         </Tile>
+
         <Tile className="border border-blue-600/40 bg-gray-800/70 backdrop-blur-sm hover:bg-gray-800/90 hover:border-blue-500/50 shadow-[inset_0_-25px_40px_-10px_rgba(59,130,246,0.12)] transition-all">
           <p className="text-xs text-gray-400 mb-2">Top Stock Buyers</p>
           <div className="space-y-2">
@@ -176,3 +198,6 @@ export default function PortfolioSummary({ trades }) {
     </Tile>
   );
 }
+
+
+

@@ -3,7 +3,9 @@ import { Tile, Button, TextArea, TextInput, Select, SelectItem, ProgressBar } fr
 import { Upload, CheckmarkFilled, WarningAlt, ErrorFilled, Document } from '@carbon/icons-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-const API_BASE = 'http:
+
+const API_BASE = 'http://localhost:8003';
+
 export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
   const [transcript, setTranscript] = useState('');
   const [audioFile, setAudioFile] = useState(null);
@@ -24,25 +26,36 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
   const [complianceScore, setComplianceScore] = useState(null);
   const [executiveSummary, setExecutiveSummary] = useState('No analysis performed yet.');
   const [auditLogs, setAuditLogs] = useState([]);
+
+  // Fetch audit logs and executive summary on component mount
   useEffect(() => {
     fetchAuditLogs();
     fetchExecutiveSummary();
   }, []);
+
   const handleAuditIt = async () => {
     if (!transcript.trim()) {
       toast.error('No transcript to audit. Please upload audio or enter transcript first.');
       return;
     }
+
     const loadingToast = toast.loading('Saving transcript to audit document...');
+    
     try {
       const response = await axios.post(`${API_BASE}/audit-transcript`, {
         transcript: transcript,
         timestamp: new Date().toISOString()
       });
+
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         toast.success('✅ Transcript audited and saved to Word document');
+        
+        // Refresh audit logs
         fetchAuditLogs();
+        
+        // Refresh executive summary
         fetchExecutiveSummary();
       } else {
         toast.error(response.data.error || 'Failed to audit transcript');
@@ -53,6 +66,7 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       toast.error(error.response?.data?.detail || 'Failed to audit transcript');
     }
   };
+
   const fetchAuditLogs = async () => {
     try {
       const response = await axios.get(`${API_BASE}/audit-logs`);
@@ -63,6 +77,7 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       console.error('Failed to fetch audit logs:', error);
     }
   };
+
   const fetchExecutiveSummary = async () => {
     try {
       const response = await axios.get(`${API_BASE}/executive-summary`);
@@ -73,16 +88,24 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       console.error('Failed to fetch executive summary:', error);
     }
   };
+
   const handleGenerateReport = async () => {
     const loadingToast = toast.loading('Generating Client Portfolio Report with RAG analysis...');
+    
     try {
       const response = await axios.post(`${API_BASE}/generate-portfolio-report`, {
         trigger_rag: true
       });
+
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         toast.success('📄 Client Portfolio Report generated successfully');
+        
+        // Open the Word document
         window.open(`${API_BASE}/download-portfolio-report`, '_blank');
+        
+        // Refresh executive summary with RAG analysis
         fetchExecutiveSummary();
       } else {
         toast.error(response.data.error || 'Failed to generate report');
@@ -93,13 +116,17 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       toast.error(error.response?.data?.detail || 'Failed to generate report');
     }
   };
+
   const handleEmailSupervisor = async () => {
     const loadingToast = toast.loading('Sending email to supervisor...');
+    
     try {
       const response = await axios.post(`${API_BASE}/email-supervisor`, {
         timestamp: new Date().toISOString()
       });
+
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         toast.success('📧 Email sent to supervisor with attachments');
       } else {
@@ -111,34 +138,45 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       toast.error(error.response?.data?.detail || 'Failed to send email');
     }
   };
+
   const handleAudioUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validate file type
     const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/x-m4a', 'audio/webm', 'audio/flac', 'audio/ogg'];
     if (!validTypes.includes(file.type)) {
       toast.error('Invalid file type. Please upload MP3, WAV, M4A, WEBM, FLAC, or OGG files.');
       return;
     }
+
+    // Validate file size (max 100MB)
     const maxSize = 100 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error('File too large. Maximum size is 100MB.');
       return;
     }
+
     setAudioFile(file);
     setIsTranscribing(true);
     const loadingToast = toast.loading('Transcribing audio with IBM Watson STT...');
+    
     try {
       const formData = new FormData();
       formData.append('file', file);
+      
       const response = await axios.post(`${API_BASE}/transcribe-audio`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
+      
       toast.dismiss(loadingToast);
+      
       if (response.data.success) {
         const { transcript: transcribedText, confidence } = response.data;
         setTranscript(transcribedText);
+        
         if (confidence < 0.7) {
           toast.warning(`Transcribed with ${Math.round(confidence * 100)}% confidence - Please review`);
         } else {
@@ -147,6 +185,7 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       } else {
         toast.error(response.data.error || 'Failed to transcribe audio');
       }
+      
     } catch (error) {
       toast.dismiss(loadingToast);
       console.error('Audio transcription error:', error);
@@ -155,28 +194,37 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       setIsTranscribing(false);
     }
   };
+
   const handleAnalyze = async () => {
+    // Validation
     if (!transcript.trim()) {
       toast.error('Please enter a transcript or upload audio file');
       return;
     }
+
     if (!tradeTicket.ticker || !tradeTicket.executed_price) {
       toast.error('Please fill in required trade ticket fields (Ticker, Executed Price)');
       return;
     }
+
     if (!token) {
       toast.error('Authentication token not available. Please refresh the page.');
       return;
     }
+
+    // Validate numeric inputs
     if (isNaN(parseFloat(tradeTicket.executed_price))) {
       toast.error('Executed price must be a valid number');
       return;
     }
+
     if (tradeTicket.quantity && isNaN(parseInt(tradeTicket.quantity))) {
       toast.error('Quantity must be a valid number');
       return;
     }
+
     setAnalyzing(true);
+
     try {
       const response = await axios.post(
         `${API_BASE}/analyze_compliance`,
@@ -199,11 +247,19 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
           }
         }
       );
+
       onAnalysisComplete(response.data);
+      
+      // Set compliance score for display
       const score = response.data.compliance_score || 0;
       setComplianceScore(score);
+      
+      // Refresh executive summary after analysis
       fetchExecutiveSummary();
+      
+      // Success notification with details
       const violations = response.data.violations?.length || 0;
+      
       if (violations === 0) {
         toast.success(`✅ Analysis Complete - Compliance Score: ${score.toFixed(0)}% - No violations detected`);
       } else {
@@ -211,6 +267,8 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       }
     } catch (error) {
       console.error('Analysis error:', error);
+      
+      // Detailed error messages
       if (error.response) {
         if (error.response.status === 401) {
           toast.error('Authentication failed. Please refresh the page.');
@@ -228,6 +286,7 @@ export default function ComplianceInputPanel({ onAnalysisComplete, token }) {
       setAnalyzing(false);
     }
   };
+
   const loadSampleData = () => {
     setTranscript(
       `Broker: Good morning, Mr. Peterson. I have an exciting opportunity for you.
@@ -238,6 +297,7 @@ Broker: Don't worry, everyone's doing it. I'll put you down for $100,000.
 Client: Well... if you think it's okay...
 Broker: Trust me, you'll thank me later. Executing now at market price.`
     );
+    
     setTradeTicket({
       ticker: 'CRYPTO-X',
       quantity: '1000',
@@ -245,14 +305,19 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
       executed_price: '101.50',
       order_type: 'MARKET'
     });
+
     setClientProfile({
       risk_tolerance: 'Conservative',
       age_category: 'Elderly',
       net_worth: 'Medium'
     });
+
+    // Set a sample compliance score
     setComplianceScore(35);
+
     toast.success('⚠️ Sample data loaded - High risk scenario');
   };
+
   return (
     <div className="h-full overflow-y-auto p-6 bg-gray-950">
       <div className="max-w-7xl mx-auto">
@@ -264,8 +329,9 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
             End-to-end workflow for investigating broker-client communications
           </p>
         </div>
+
         <div className="space-y-4">
-          {}
+          {/* Zone 1: Evidence - Broker Communication */}
           <Tile className="border border-blue-600/40 bg-gray-900/90 backdrop-blur-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 font-bold text-sm">1</div>
@@ -276,6 +342,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <p className="text-xs text-gray-400">The "Ground Truth" - what the client actually said</p>
               </div>
             </div>
+
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-gray-300">
@@ -290,6 +357,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                   className="w-full"
                 />
               </div>
+
               <div className="border border-dashed border-blue-600/40 rounded-lg p-4 bg-gray-800/50">
                 <div className="flex items-center gap-2 mb-2">
                   <Upload size={20} className="text-blue-400" />
@@ -312,6 +380,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                   <p className="text-xs text-blue-400 mt-2 animate-pulse">⏳ Transcribing with Watson STT...</p>
                 )}
               </div>
+
               {transcript.trim() && (
                 <Button
                   kind="primary"
@@ -325,7 +394,8 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
               )}
             </div>
           </Tile>
-          {}
+
+          {/* Zone 2: Trade Execution Log */}
           <Tile className="border border-green-600/40 bg-gray-900/90 backdrop-blur-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-green-600/20 flex items-center justify-center text-green-400 font-bold text-sm">2</div>
@@ -336,6 +406,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <p className="text-xs text-gray-400">Used for Slippage Check - flags Best Execution Violations</p>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <TextInput
                 id="ticker"
@@ -344,6 +415,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 onChange={(e) => setTradeTicket({...tradeTicket, ticker: e.target.value})}
                 placeholder="AAPL"
               />
+              
               <TextInput
                 id="quantity"
                 labelText="Quantity"
@@ -352,6 +424,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 onChange={(e) => setTradeTicket({...tradeTicket, quantity: e.target.value})}
                 placeholder="100"
               />
+              
               <TextInput
                 id="intended_price"
                 labelText="Intended Price"
@@ -361,6 +434,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 onChange={(e) => setTradeTicket({...tradeTicket, intended_price: e.target.value})}
                 placeholder="150.00"
               />
+              
               <TextInput
                 id="executed_price"
                 labelText="Executed Price *"
@@ -370,6 +444,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 onChange={(e) => setTradeTicket({...tradeTicket, executed_price: e.target.value})}
                 placeholder="152.50"
               />
+
               <Select
                 id="order_type"
                 labelText="Order Type"
@@ -381,6 +456,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <SelectItem value="LIMIT" text="Limit Order" />
               </Select>
             </div>
+
             {tradeTicket.intended_price && tradeTicket.executed_price && (
               <div className="mt-3 p-2 bg-gray-800/70 rounded border border-yellow-600/30">
                 <p className="text-xs text-yellow-300">
@@ -392,7 +468,8 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
               </div>
             )}
           </Tile>
-          {}
+
+          {/* Zone 3: Client Suitability Profile (KYC) */}
           <Tile className="border border-purple-600/40 bg-gray-900/90 backdrop-blur-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center text-purple-400 font-bold text-sm">3</div>
@@ -403,6 +480,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <p className="text-xs text-gray-400">Elderly+Conservative with High Risk = Abuse Alert</p>
               </div>
             </div>
+
             <div className="space-y-3">
               <Select
                 id="risk_tolerance"
@@ -414,6 +492,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <SelectItem value="Moderate" text="Moderate" />
                 <SelectItem value="Aggressive" text="Aggressive" />
               </Select>
+
               <Select
                 id="age_category"
                 labelText="Age Category"
@@ -424,6 +503,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <SelectItem value="Middle-Age" text="Middle-Age (35-60)" />
                 <SelectItem value="Elderly" text="Elderly (60+)" />
               </Select>
+
               <Select
                 id="net_worth"
                 labelText="Net Worth"
@@ -435,6 +515,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
                 <SelectItem value="High" text="High (> $5M)" />
               </Select>
             </div>
+
             {clientProfile.risk_tolerance === 'Conservative' && clientProfile.age_category === 'Elderly' && (
               <div className="mt-3 p-2 bg-red-900/30 rounded border border-red-600/40">
                 <p className="text-xs text-red-300">
@@ -444,6 +525,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
             )}
           </Tile>
         </div>
+
         <div className="mt-4 flex justify-end">
           <Button kind="secondary" size="sm" onClick={loadSampleData}>
             Load Sample Data
@@ -453,3 +535,7 @@ Broker: Trust me, you'll thank me later. Executing now at market price.`
     </div>
   );
 }
+
+
+
+

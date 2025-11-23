@@ -5,12 +5,14 @@ import {
   HeaderGlobalAction,
 } from '@carbon/react';
 import { UserAvatar, Notification } from '@carbon/icons-react';
+
 export default function CarbonHeader({ platformName, userName }) {
   return (
     <Header aria-label={platformName}>
       <HeaderName href="#" prefix="IBM">
         {platformName}
       </HeaderName>
+      
       <HeaderGlobalBar>
         <HeaderGlobalAction
           aria-label="Notifications"
@@ -18,6 +20,7 @@ export default function CarbonHeader({ platformName, userName }) {
         >
           <Notification size={20} />
         </HeaderGlobalAction>
+        
         <HeaderGlobalAction
           aria-label="User Profile"
           tooltipAlignment="end"
