@@ -1,0 +1,13 @@
+﻿.env
+orqon_env/
+venv/
+__pycache__/
+*.pyc
+data/google_credentials.json
+data/google_token.pickle
+data/*.csv
+data/*.xlsx
+data/chroma_db/
+data/compliance_memory/
+.vscode/
+.DS_Store

@@ -1,0 +1,152 @@
+{
+  "name": "orqon-mcp-toolkit",
+  "version": "3.0.0",
+  "description": "IBM watsonx Orchestrate MCP toolkit for financial trading operations with multi-agent orchestration",
+  "author": "Orqon Team",
+  "license": "MIT",
+  "mcp": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {
+      "tools": {
+        "listChanged": false
+      },
+      "prompts": {},
+      "resources": {}
+    }
+  },
+  "server": {
+    "host": "localhost",
+    "port": 8003,
+    "transport": ["stdio", "sse", "http"],
+    "endpoints": {
+      "info": "/mcp/info",
+      "listTools": "/mcp/tools/list",
+      "callTool": "/mcp/tools/call",
+      "sse": "/mcp/sse"
+    }
+  },
+  "authentication": {
+    "supported": ["api_key", "bearer_token", "basic_auth", "oauth2"],
+    "default": "api_key",
+    "headerName": "X-API-Key"
+  },
+  "tools": {
+    "gmail": {
+      "send_email": {
+        "description": "Send email using Gmail",
+        "requiresAuth": true,
+        "scopes": ["https://www.googleapis.com/auth/gmail.send"]
+      },
+      "draft_email": {
+        "description": "Create draft email in Gmail",
+        "requiresAuth": true,
+        "scopes": ["https://www.googleapis.com/auth/gmail.compose"]
+      },
+      "search_emails": {
+        "description": "Search emails in Gmail",
+        "requiresAuth": true,
+        "scopes": ["https://www.googleapis.com/auth/gmail.readonly"]
+      }
+    },
+    "excel": {
+      "get_client_email": {
+        "description": "Get client email from database",
+        "requiresAuth": false
+      },
+      "get_client_trades": {
+        "description": "Get all trades for a client",
+        "requiresAuth": false
+      },
+      "search_trades": {
+        "description": "Search trades by criteria",
+        "requiresAuth": false
+      }
+    },
+    "finance": {
+      "get_stock_price": {
+        "description": "Get current stock price",
+        "requiresAuth": false
+      },
+      "analyze_portfolio": {
+        "description": "Analyze client portfolio",
+        "requiresAuth": false
+      }
+    },
+    "compliance": {
+      "search_knowledge": {
+        "description": "Search compliance knowledge base using RAG",
+        "requiresAuth": false,
+        "features": ["vector_search", "hybrid_search", "citations"]
+      },
+      "check_client_risk": {
+        "description": "Check client risk profile",
+        "requiresAuth": false
+      }
+    }
+  },
+  "agents": {
+    "coordinator": {
+      "type": "coordinator",
+      "description": "Routes queries to specialized agents",
+      "handoffs": true
+    },
+    "gmail": {
+      "type": "gmail",
+      "description": "Email operations specialist",
+      "capabilities": ["send", "draft", "search", "read"]
+    },
+    "excel": {
+      "type": "excel",
+      "description": "CSV/Excel data specialist",
+      "capabilities": ["read", "write", "search", "analyze"]
+    },
+    "finance": {
+      "type": "finance",
+      "description": "Financial data specialist",
+      "capabilities": ["stock_prices", "portfolio_analysis", "market_data"]
+    },
+    "compliance": {
+      "type": "compliance",
+      "description": "Compliance and RAG specialist",
+      "capabilities": ["knowledge_search", "risk_assessment", "rag_retrieval"]
+    }
+  },
+  "dependencies": {
+    "python": ">=3.9",
+    "packages": [
+      "fastapi>=0.109.0",
+      "uvicorn>=0.27.0",
+      "ibm-watsonx-orchestrate>=1.15.0",
+      "google-api-python-client>=2.117.0",
+      "pandas>=2.2.0",
+      "langchain>=0.1.0"
+    ]
+  },
+  "deployment": {
+    "local": {
+      "command": "python mcp_server.py",
+      "workingDirectory": "./orqon_core",
+      "requirementsFile": "requirements.txt"
+    },
+    "remote": {
+      "url": "http://localhost:8003",
+      "protocol": "sse",
+      "healthCheck": "/mcp/info",
+      "timeout": 30
+    }
+  },
+  "ibm": {
+    "watsonxOrchestrate": {
+      "compatible": true,
+      "adkVersion": "1.15.0",
+      "importCommand": "orchestrate toolkits import --kind mcp --name orqon-toolkit --description 'Financial trading multi-agent toolkit' --url http://localhost:8003/mcp/sse --transport sse --tools '*'",
+      "documentation": "https://developer.watson-orchestrate.ibm.com/tools/toolkits/local_mcp_toolkits"
+    }
+  },
+  "metadata": {
+    "created": "2025-11-23",
+    "tags": ["finance", "trading", "multi-agent", "rag", "compliance", "gmail", "excel"],
+    "category": "business",
+    "useCase": "Financial trading operations with compliance monitoring and client communication"
+  }
+}

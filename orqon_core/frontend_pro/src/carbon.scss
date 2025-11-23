@@ -1,0 +1,89 @@
+// IBM Carbon Design System styles
+@use '@carbon/react';
+
+// Override Carbon font families globally
+* {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+// Thin headings with larger sizes
+h1, .cds--header-name, .cds--header-menu-item {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-weight: 300 !important;
+  font-size: 2rem !important;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-weight: 300 !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.01em;
+}
+
+h4, h5, h6 {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-weight: 400 !important;
+}
+
+// Override all Carbon components
+.cds--btn,
+.cds--text-input,
+.cds--textarea,
+.cds--select,
+.cds--tag,
+.cds--tile,
+.cds--header,
+.cds--tabs,
+.cds--modal,
+.cds--accordion,
+.cds--data-table,
+.cds--header-name,
+.cds--header-menu-item,
+.cds--btn--primary,
+.cds--btn--secondary {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+
+// Thin blue outline stroke for all box components
+.cds--tile {
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.2) !important;
+}
+
+.cds--text-input,
+.cds--textarea,
+.cds--select-input {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+  color: #f3f4f6 !important;
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  
+  &::placeholder {
+    color: #9ca3af !important;
+    opacity: 0.7;
+  }
+  
+  &:focus {
+    background-color: rgba(31, 41, 55, 0.95) !important;
+    border-color: rgba(37, 99, 235, 0.6) !important;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.6) !important;
+  }
+}
+
+.cds--btn {
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  
+  &:hover {
+    border-color: rgba(37, 99, 235, 0.6) !important;
+  }
+}
+
+.cds--tag {
+  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+}

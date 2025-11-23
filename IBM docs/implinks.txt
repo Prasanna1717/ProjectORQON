@@ -1,0 +1,8 @@
+presentation inspi,
+
+https://developer.ibm.com/hackathons/
+https://developer.ibm.com/events/agentic-ai-hackathon-with-ibm-watsonx-orchestrate/
+
+tech links
+https://developer.watson-orchestrate.ibm.com/manage/channels#enabling-security
+https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base

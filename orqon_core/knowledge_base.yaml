@@ -1,0 +1,26 @@
+spec_version: v1
+kind: knowledge_base
+name: trade_compliance_knowledge
+description: |
+  Enterprise trading compliance knowledge base containing trade regulations,
+  client profiles, risk assessment criteria, and compliance procedures.
+  Provides context for trade analysis, risk detection, and regulatory compliance.
+
+documents:
+  - "docs/compliance_guidelines.txt"
+  - "docs/risk_assessment_rules.txt"
+  - "docs/trading_procedures.txt"
+
+vector_index:
+  embeddings_model_name: ibm/slate-125m-english-rtrvr-v2
+  # IBM Slate model for high-quality semantic search
+  # Optimized for enterprise document retrieval
+  
+  # Optional AstraDB configuration (if using cloud vector store)
+  # api_endpoint: "https://your-astradb-endpoint"
+  # data_type: "vector"
+  # embedding_mode: "cosine"
+  # keyspace: "trade_compliance"
+  # collection: "trade_documents"
+  # search_mode: "similarity"
+  # limit: 5
